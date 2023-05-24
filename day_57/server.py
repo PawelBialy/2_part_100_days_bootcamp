@@ -9,7 +9,7 @@ def home():
     random_number = random.randint(1,10)
     today = datetime.date.today()
     year = today.year
-    return render_template("index.html", num=random_number, current= year)
+    return render_template("index.html", num=random_number, current= year )
 
 
 @app.route("/guess/<name>")
