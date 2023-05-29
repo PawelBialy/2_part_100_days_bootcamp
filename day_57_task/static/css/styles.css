@@ -5,6 +5,7 @@ body{
  -webkit-font-smoothing: antialiased;
   color:#212121;
 }
+
 .wrapper{
   position: relative;
   clear:both;
