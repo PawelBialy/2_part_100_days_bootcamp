@@ -28,7 +28,7 @@ def button():
 def login():
     login_form = LoginForm()
     if login_form.validate_on_submit():
-        if login_form.email.data == "admin@email.com" and login_form.password.data == "123456789" :
+        if login_form.email.data == "!" and login_form.password.data == "123456789" :
             return  render_template("success.html")
         else :
             return render_template('denied.html')
