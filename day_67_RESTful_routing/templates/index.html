@@ -27,7 +27,7 @@
           <h2 class="post-title">{{ post.title }}</h2>
           <h3 class="post-subtitle">{{ post.subtitle }}</h3>
         </a>
-        <!-- : Add code to delete posts below -->
+        <!-- TO DO: Add code to delete posts below -->
         <p class="post-meta">
           Posted by
           <a href="#">{{post.author}}</a>
@@ -40,10 +40,10 @@
 
       <!-- New Post -->
       <div class="d-flex justify-content-end mb-4">
-      <!-- : Adding new posts -->
+      <!--  DONE: Adding new posts -->
         <a
           class="btn btn-primary float-right"
-          href="{{url_for('add_new_post')}}"
+          href="{{ url_for('add_new_post') }}"
           >Create New Post</a
         >
       </div>
