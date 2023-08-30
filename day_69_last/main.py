@@ -9,8 +9,9 @@ from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.orm import relationship
 # Import your forms from the forms.py
-from forms import CreatePostForm, RegisterForm, LoginForm
+from forms import CreatePostForm, RegisterForm, LoginForm, CommentForm
 from sqlalchemy import ForeignKey,Integer
+
 
 
 app = Flask(__name__)
@@ -50,6 +51,17 @@ class User(UserMixin, db.Model):
     name = db.Column(db.String(100))
     posts = relationship("BlogPost", back_populates="author")
 
+    comments = relationship("Comment", back_populates='comment_author')
+
+class Comment(db.Model):
+    __tablename__ = "comments"
+    id = db.Column(db.Integer, primary_key=True)
+    text = db.Column(db.Text, nullable=False)
+    author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    comment_author = relationship("User", back_populates="comments")
+    post_id = db.Column(db.Integer, db.ForeignKey("blog_posts.id"))
+    parent_post = relationship("BlogPost", back_populates="comments")
+    text = db.Column(db.Text, nullable= False)
 # CONFIGURE TABLES
 class BlogPost(db.Model):
     __tablename__ = "blog_posts"
@@ -64,17 +76,12 @@ class BlogPost(db.Model):
     date = db.Column(db.String(250), nullable=False)
     body = db.Column(db.Text, nullable=False)
     img_url = db.Column(db.String(250), nullable=False)
-
-
-# TODO: Create a User table for all your registered users. 
-
-
-
+    comments = relationship("Comment", back_populates="parent_post")
 with app.app_context():
     db.create_all()
 
 
-# TODO: Use Werkzeug to hash the user's password when creating a new user.
+# Use Werkzeug to hash the user's password when creating a new user.
 @app.route('/register', methods=["GET", "POST"])
 def register():
     form = RegisterForm()
@@ -103,7 +110,7 @@ def register():
         return redirect(url_for("get_all_posts"))
     return render_template("register.html", form=form, current_user=current_user)
 
-# TODO: Retrieve a user from the database based on their email.
+#Retrieve a user from the database based on their email.
 
 
 
@@ -145,10 +152,23 @@ def get_all_posts():
 
 
 # TODO: Allow logged-in users to comment on posts
-@app.route("/post/<int:post_id>")
+@app.route("/post/<int:post_id>", methods=['GET','POST'])
 def show_post(post_id):
     requested_post = db.get_or_404(BlogPost, post_id)
-    return render_template("post.html", post=requested_post,current_user=current_user)
+    comment_form = CommentForm()
+    if comment_form.validate_on_submit():
+        if not current_user.is_authenticated:
+            flash("You need to login or register to comment.")
+            return redirect(url_for('login'))
+
+        new_comment = Comment(
+            text = comment_form.comment.data,
+            comment_author = current_user,
+            parent_post = requested_post
+        )
+        db.session.add(new_comment)
+        db.session.commit()
+    return render_template("post.html", post=requested_post,current_user=current_user, form= comment_form)
 
 
 # TODO: Use a decorator so only an admin user can create a new post
@@ -194,6 +214,7 @@ def edit_post(post_id):
     return render_template("make-post.html", form=edit_form, is_edit=True, current_user=current_user)
 
 
+
 # TODO: Use a decorator so only an admin user can delete a post
 @app.route("/delete/<int:post_id>")
 @admin_only
@@ -202,6 +223,15 @@ def delete_post(post_id):
     db.session.delete(post_to_delete)
     db.session.commit()
     return redirect(url_for('get_all_posts'))
+
+gravatar = Gravatar(app,
+                    size=100,
+                    rating='g',
+                    default='retro',
+                    force_default=False,
+                    force_lower=False,
+                    use_ssl=False,
+                    base_url=None)
 
 
 @app.route("/about")
